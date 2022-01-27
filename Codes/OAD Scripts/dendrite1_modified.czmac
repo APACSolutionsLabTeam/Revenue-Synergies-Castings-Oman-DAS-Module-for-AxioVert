@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Script>
+  <Context>Zen26</Context>
+  <Version>1.0</Version>
+  <Language>Python</Language>
+  <Text>import os
+import shutil
+import time
+Zen.Application.MacroEditor.ClearMessages()
+
+aopp = Zen.Application.GetAllOutputParameters()
+
+#Helpful for printing all output parameters from ZEN workflow
+def print_aopp(aopp):
+    ids = []
+    values = []
+    for i in range(len(aopp)):
+        aopp_i = aopp[i]
+        print("i: %s" % str(i))
+        try:
+            print("aopp_i.Id: %s" % str(aopp_i.Id))
+            ids.append(aopp_i.Id)
+        except:
+            print("Couldnt get Id")
+        try:
+            print("aopp_i.Value: %s" % str(aopp_i.Value))
+            values.append(aopp_i.Value)
+        except:
+            print("Couldnt get Value")
+        
+    return ids, values
+
+#Function to retrieve some outputs of previous workbenches in ZEN.
+def get_outputs(aopp):
+    found_image = False
+    for i in range(len(aopp)):
+        aopp_i = aopp[i]
+        try:
+            if i == 0 and aopp_i.Value.IsZenImage:
+                found_image = True
+                original_image = aopp_i.Value
+            elif found_image == False and aopp_i.Id == 'out':
+                original_image = aopp_i.Value
+            if aopp_i.Id == 'tiff_Image':
+                tiff_image = aopp_i.Value
+            if aopp_i.Id == 'New_XML':
+                xml_out = aopp_i.Value
+            #if aopp_i.Id == 'out' and aopp_i.Value.IsZenImage:
+            #    original_
+        except:
+            pass
+    return original_image, tiff_image, xml_out
+
+##Uncomment line below if you want to retrieve all ID's and Values from previous workbenches
+#ids, values = print_aopp(aopp)
+
+#Creates a window to ask the user where the output images should be saved
+"""
+window = Zen.Windows.CreateWindow()
+window.AddFolderBrowser('ouput_fp', 'Output folder:')
+result = window.Show()
+ouput_fp = result.GetValue('ouput_fp')
+"""
+ouput_fp='C:\Temp\DAS'
+
+try:
+    if os.path.exists(ouput_fp):
+        #os.rmdir(ouput_fp)
+        shutil.rmtree(ouput_fp)
+except:
+    pass
+
+time.sleep(2)
+if not os.path.exists(ouput_fp):
+    os.mkdir('C:\Temp\DAS')
+
+
+#Retrieve original image, the new tiff image and xml output
+original_image, tiff_image, xml_out = get_outputs(aopp)
+fn = original_image.FileName
+image_name, ext_str = os.path.splitext(os.path.basename(fn))
+outputczi_fp = ouput_fp + '\\' + image_name + '_with_profiles' + ext_str
+print('outputczi_fp: %s' % str(outputczi_fp))
+Zen.Application.Save(tiff_image, outputczi_fp)
+active_image = Zen.Application.LoadImage(outputczi_fp)
+
+#Output image/file path to be retrieved later
+Zen.Application.ActiveWorkbench.SetOutputValue(active_image, 'image_with_profiles')
+Zen.Application.ActiveWorkbench.SetOutputValue(ouput_fp, 'ouput_fp')
+Zen.Application.ActiveWorkbench.SetOutputValue(outputczi_fp, 'outputczi_fp')
+
+
+
+</Text>
+  <Author></Author>
+  <Description></Description>
+  <Keywords></Keywords>
+  <Row>68</Row>
+  <Column>14</Column>
+</Script>

@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Script>
+  <Context>Zen26</Context>
+  <Version>1.0</Version>
+  <Language>Python</Language>
+  <Text>import os
+import sys
+import time
+
+
+image = Zen.Application.ActiveWorkbench.GetDefaultInputValue()
+outputczi_fp_dots = Zen.Application.GetFirstOutputParameterValue('outputczi_fp_dots')
+savepath = Zen.Application.GetFirstOutputParameterValue('ouput_fp')
+
+st = time.time()
+module_name = 'group_dots_calculate_measurements'
+module_version = 0
+
+# get the module parameters for the specified module
+params = ZenApeer.Onsite.GetSampleModuleParameters(module_name, module_version)
+
+# define the input parameters
+Path_to_image = {'Path_to_image': outputczi_fp_dots}
+
+# how to define parameters explicitly
+my_parameters = {}
+
+print("Running module")
+out = ZenApeer.Onsite.RunModule(moduleName = module_name, moduleVersion = module_version, inputs = Path_to_image, parameters = my_parameters, storagePath = savepath)
+
+# show output results storage locations
+print('\n')
+print('------ Results Locations ------')
+for o in out.Outputs.GetEnumerator():
+    if o.Key =='DAS_measurements':
+        DAS_measurements_fp = o.Value
+    if o.Key =='Image_statistics':
+        Image_statistics_fp = o.Value
+    
+    print(o.Key, ' : ', o.Value)
+
+# show filename of logfile
+print('\n')
+print('------ Location of Logfile ------')
+print(out.LogFile)
+
+# show state of module completion
+print('\n')
+print('------ State of Module Completion ------')
+print(out.State)
+
+DAS_measurements = Zen.Application.LoadTable(DAS_measurements_fp)
+Image_statistics = Zen.Application.LoadTable(Image_statistics_fp)
+
+Zen.Application.ActiveWorkbench.SetDefaultOutputValue(image)
+Zen.Application.ActiveWorkbench.SetOutputValue(DAS_measurements, 'DAS_measurements')
+Zen.Application.ActiveWorkbench.SetOutputValue(Image_statistics, 'Image_statistics')
+Zen.Application.ActiveWorkbench.SetOutputValue(DAS_measurements_fp, 'DAS_measurements_fp')
+Zen.Application.ActiveWorkbench.SetOutputValue(Image_statistics_fp, 'Image_statistics_fp')
+
+end = time.time()
+print("Time it takes to run module: %s" % str(end - st))
+</Text>
+  <Author></Author>
+  <Description></Description>
+  <Keywords></Keywords>
+  <Row>48</Row>
+  <Column>66</Column>
+</Script>

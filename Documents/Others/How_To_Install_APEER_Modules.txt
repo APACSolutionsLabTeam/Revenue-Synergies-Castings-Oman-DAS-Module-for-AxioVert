@@ -1,0 +1,18 @@
+Dendrite Arm Spacing via OAD_updated_APAC_07052021.zip file contains the ZEN Core Job for computing the Dendrite Arm Spacing in input images. 
+
+For executing this ZEN Core Job, the user has to download 3 APEER Modules which can be done as explained below: 
+
+1) Below is the APEER access token that the user can put under “Maintenance” -> “General Options” -> “APEER” which allows one to import the necessary APEER modules. 
+
+    Access token: 9VkLstmTJ1pSzYikXIYzJSW59RrlHPMc9YLt3lMXZNs
+
+2 )The three modules that are needed should be the only private or shared modules namely:
+   1. “find_peaks_insert_dots”
+   2. “group_dots_calculate_measurements”
+   3. “Create_xml_from_czi_and_insert_profile_in_xml”
+
+3) The user can import these APEER Modules under “Manage Template” -> “Show APEER Modules” then click on the cloud icon in the top right and only check the “Shared Modules” checkbox. 
+   The three modules should be listed and you can download them there.
+
+Now, this ZEN Core Job can be executed for the user-selected input image.
+

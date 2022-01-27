@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Script>
+  <Context>Zen26</Context>
+  <Version>1.0</Version>
+  <Language>Python</Language>
+  <Text>import os
+import csv
+import codecs
+import re
+#from io import open
+
+#Zen.Application.MacroEditor.ClearMessages()
+aopp = Zen.Application.GetAllOutputParameters()
+
+Image_statistics_fp = Zen.Application.GetLastOutputParameterValue('Image_statistics_fp')
+DAS_measurements_fp = Zen.Application.GetLastOutputParameterValue('DAS_measurements_fp')
+image_stats_table = Zen.Application.GetLastOutputParameterValue('Image_statistics')
+DAS_measurements_table = Zen.Application.GetLastOutputParameterValue('DAS_measurements')
+
+#DAS_measurements_fp = "C:\\Evan\\Workflows\\dendrite_arm_spacing\\test_output_for_ZEN_workflow\\Results_0008\\met99--07_with_profiles_in_place_w_dots_DAS_meas.csv"
+#Image_statistics_fp = "C:\\Evan\\Workflows\\dendrite_arm_spacing\\test_output_for_ZEN_workflow\\Results_0008\\met99--07_with_profiles_in_place_w_dots_img_sts.csv"
+
+
+with open(Image_statistics_fp, 'r') as img_sts_csv:
+    reader = csv.reader(img_sts_csv)
+    for row in reader:
+        img_sts_col_titles = []
+        for title in row:
+            splts = title.split(' ')
+            ind_title = ""
+            for splt in splts:
+                dec_splt = splt.decode("UTF-8")
+                ind_title += dec_splt + " "
+            ind_title = (re.sub(r'(?&lt;![A-Z\W])(?=[A-Z])', ' ', ind_title)) # for appropriate spacing between words in the heading titles - spacing between uppercase letters (e.g., PixelSize to Pixel Size)
+            if(ind_title.Contains(u"\u03bc")): 
+                ind_title.replace(u"\u03bc", "µ")
+            else:
+                if not ind_title.Contains('Profile'):
+                     ind_title = ind_title + "µm" # unicode character "\u03bc" missing in some titles like Profile, pixel size and distance measurement unit
+            #print(ind_title)
+            img_sts_col_titles.append(ind_title)
+        #img_sts_col_titles = row
+        break
+
+
+with open(DAS_measurements_fp, 'r') as das_csv:
+    reader = csv.reader(das_csv)
+    for row in reader:
+        das_col_titles = []
+        for title in row:
+            splts = title.split(' ')
+            ind_title = ""
+            for splt in splts:
+                dec_splt = splt.decode("UTF-8")
+                ind_title += dec_splt + " "
+            ind_title.replace(u"\u03bc", "µ")
+            das_col_titles.append(ind_title)
+        #das_col_titles = row
+        break
+
+print("das_col_titles: %s" % str(das_col_titles))
+print("img_sts_col_titles: %s" % str(img_sts_col_titles))
+
+
+#Helpful function for printing all values of a table
+def print_vals_in_table(tab):
+    col_num = tab.ColumnCount
+    row_num = tab.RowCount
+    print("col_num: %s" % str(col_num))
+    print("row_num: %s" % str(row_num))
+    for i in range(row_num):
+        for j in range(col_num):
+            print("tab.GetValue(%s,%s): %s" % (str(i), str(j), str(tab.GetValue(i,j))))
+
+
+#Function that make the first row of a table the title for the columns and then rounds each value to the 2nd digit.
+#Original APEER output had titles as the first row in the table which looked a little messy and had values to the 10th digit or so which crowded the report
+def reformat_tables(tab):
+    col_num = tab.ColumnCount
+    row_num = tab.RowCount
+    print("col_num: %s" % str(col_num))
+    print("row_num: %s" % str(row_num))
+    new_table = ZenTable()
+    for j in range(col_num):
+        new_table.Columns.Add(tab.GetValue(0,j))
+        for i in range(row_num):
+            if i &gt; 0:
+                try:
+                    print("i: %s  j: %s   val: %s" % (str(i), str(j), str(tab.GetValue(i,j))))
+                    #new_table.SetValue(i - 1, j, round(float(tab.GetValue(i,j)), 4))
+                    new_table.SetValue(i - 1, j, round(float(tab.GetValue(i,j)), 2))
+                except:
+                    new_table.SetValue(i - 1, j, tab.GetValue(i,j))
+    return new_table
+
+#image_stats_table had the cols and rows reversed so we used this one, for DAS we should be able to use the original
+def reformat_tables_new_old(tab):
+    col_num = tab.ColumnCount
+    row_num = tab.RowCount
+    print("col_num: %s" % str(col_num))
+    print("row_num: %s" % str(row_num))
+    new_table = ZenTable()
+    for i in range(row_num):
+        new_table.Columns.Add(tab.GetValue(i,0))
+    for i in range(row_num):
+        for j in range(col_num):
+            if j &gt; 0:
+                try:
+                    print("i: %s  j: %s   val: %s" % (str(i), str(j), str(tab.GetValue(i,j))))
+                    #new_table.SetValue(j, i, round(float(tab.GetValue(i,j)), 4))
+                    new_table.SetValue(j, i, round(float(tab.GetValue(i,j)), 2))
+                except:
+                    new_table.SetValue(j, i, tab.GetValue(i,j))
+    return new_table
+
+def reformat_tables_new(tab, titles):
+    col_num = tab.ColumnCount
+    row_num = tab.RowCount
+    print("col_num: %s" % str(col_num))
+    print("row_num: %s" % str(row_num))
+    new_table = ZenTable()
+    for j in range(col_num):
+        new_table.Columns.Add(titles[j])
+        for i in range(row_num):
+            try:
+                print("i: %s  j: %s   val: %s" % (str(i), str(j), str(tab.GetValue(i,j))))
+                #new_table.SetValue(i, j, round(float(tab.GetValue(i,j)), 4))
+                tab_str =  str(tab.GetValue(i,j))
+                if tab_str.Contains(u"\u03bc") is True:
+                     tab_str = tab_str[: -2] # to remove um in string in the pixel size column
+                new_table.SetValue(i, j, round(float(tab_str), 2))
+            except:
+                new_table.SetValue(i, j, re.sub(r'(?&lt;![A-Z\W])(?=[A-Z])', ' ', tab.GetValue(i,j))) # split string based on uppercase letters(e.g. RectangleProfile to Recatngle Profile)
+    return new_table
+
+
+#Creates newly formatted tables
+new_image_stats_table = reformat_tables_new(image_stats_table, img_sts_col_titles)
+new_DAS_measurements_table = reformat_tables_new(DAS_measurements_table, das_col_titles)
+
+
+new_image_stats_table.Columns.RemoveAt(2)
+new_image_stats_table.Columns.RemoveAt(8)
+
+
+#Sets new tables as output so report workbench can add them to final report
+Zen.Application.ActiveWorkbench.SetOutputValue(new_image_stats_table,'new_image_stats_table')
+Zen.Application.ActiveWorkbench.SetOutputValue(new_DAS_measurements_table,'new_DAS_measurements_table')
+</Text>
+  <Author></Author>
+  <Description></Description>
+  <Keywords></Keywords>
+  <Row>57</Row>
+  <Column>1</Column>
+</Script>

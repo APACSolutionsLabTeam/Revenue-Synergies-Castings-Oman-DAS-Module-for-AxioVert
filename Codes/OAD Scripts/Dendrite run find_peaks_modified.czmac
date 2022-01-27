@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Script>
+  <Context>Zen26</Context>
+  <Version>1.0</Version>
+  <Language>Python</Language>
+  <Text>import os
+import sys
+import time
+
+
+image = Zen.Application.ActiveWorkbench.GetDefaultInputValue()
+
+savepath = Zen.Application.GetFirstOutputParameterValue('ouput_fp')
+image_with_profiles = Zen.Application.GetFirstOutputParameterValue('image_with_profiles')
+outputczi_fp = Zen.Application.GetFirstOutputParameterValue('outputczi_fp')
+
+image_name, ext_str = os.path.splitext(os.path.basename(outputczi_fp))
+outputczi_fp_new = savepath + '\\' + image_name + '_in_place' + ext_str
+
+Zen.Application.Save(image, outputczi_fp_new)
+
+#Get center x/y and radius from circle annotation
+
+"""
+win=Zen.Windows.CreateWindow('Dendrite Arm Spacing Input')
+win.AddDropDown('Annotate_Troughs_or_Peaks', "This option allows you to choose whether you want the annotations to be placed on the sections of the dendrite arms with pixel values of higher intensity (peaks) or lower intensity (troughs).", ['find_peaks', 'find_troughs'], 0)
+window=win.Show()
+
+Annotate_Troughs_or_Peaks = window.GetValue('Annotate_Troughs_or_Peaks')
+"""
+
+Annotate_Troughs_or_Peaks='find_troughs'
+
+st = time.time()
+#ZenApeer.Onsite.RunModule("Radial Correction", ...)
+module_name = 'find_peaks_insert_dots'
+module_version = 0
+
+# get the module parameters for the specified module
+params = ZenApeer.Onsite.GetSampleModuleParameters(module_name, module_version)
+
+# define the input parameters
+#print("output_image_fp: %s" % str(output_image_fp))
+Path_to_image = {'Path_to_image': outputczi_fp_new}
+
+# how to define parameters explicitly
+my_parameters = {'Annotate_Troughs_or_Peaks': Annotate_Troughs_or_Peaks}
+
+print("Running module")
+out = ZenApeer.Onsite.RunModule(moduleName = module_name, moduleVersion = module_version, inputs = Path_to_image, parameters = my_parameters, storagePath = savepath)
+
+# show output results storage locations
+print('\n')
+print('------ Results Locations ------')
+for o in out.Outputs.GetEnumerator():
+    if o.Key =='tiff_Image':
+        output_image_fp_2 = o.Value
+    print(o.Key, ' : ', o.Value)
+
+# show filename of logfile
+print('\n')
+print('------ Location of Logfile ------')
+print(out.LogFile)
+
+# show state of module completion
+print('\n')
+print('------ State of Module Completion ------')
+print(out.State)
+
+
+tiff_image_2 = Zen.Application.LoadImage(output_image_fp_2)
+outputczi_fp_dots = savepath + '\\' + image_name + '_in_place_w_dots' + ext_str
+Zen.Application.Save(tiff_image_2, outputczi_fp_dots)
+tiff_image_3 = Zen.Application.LoadImage(outputczi_fp_dots)
+Zen.Application.ActiveWorkbench.SetDefaultOutputValue(tiff_image_3)
+Zen.Application.ActiveWorkbench.SetOutputValue(outputczi_fp_dots, 'outputczi_fp_dots')
+Zen.Application.ActiveWorkbench.SetOutputValue(output_image_fp_2, 'output_image_fp_2')
+
+end = time.time()
+print("Time it takes to run module: %s" % str(end - st))
+</Text>
+  <Author></Author>
+  <Description></Description>
+  <Keywords></Keywords>
+  <Row>26</Row>
+  <Column>1</Column>
+</Script>
